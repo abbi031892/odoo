@@ -3,6 +3,7 @@
 # For copyright and license notices, see __openerp__.py file in root directory
 ##############################################################################
 from odoo import fields, api, exceptions, models
+import os
 
 
 class ProductBarcode(models.Model):
@@ -31,8 +32,7 @@ class ProductBarcode(models.Model):
             raise exceptions.Warning((
                 'You provided an invalid "EAN13 Barcode" reference. You may '
                 'use the "Internal Reference" field instead.'))
-        # eans = self.search([('id', '!=', self.id), ('name', '=', self.name)])
-        eans = self.search([('name', '=', self.name)])
+        eans = self.search([('id', '!=', self.id), ('name', '=', self.name)])
         if eans:
             raise exceptions.Warning((
                 'The EAN13 Barcode "%s" already exists for product "%s"!') % (
@@ -67,6 +67,8 @@ class ProductProduct(models.Model):
         if self.barcode_ids:
             # if self.barcode != self.barcode_ids[0]:
             #     self.barcode = self.barcode_ids[0].name
+            # common_string = self.barcode_ids[0]
+            # print 'yes'
             common_string = self._findcommonstart(self.barcode_ids)
             if self.barcode != common_string:
                 self.barcode = common_string
@@ -107,18 +109,8 @@ class ProductProduct(models.Model):
             domain += [('barcode_ids', 'in', eans.ids)]
         return super(ProductProduct, self).search(domain, *args, **kwargs)
 
-    def _getcommonletters(self, strlist):
-        return ''.join([x[0] for x in zip(*strlist) \
-                        if reduce(lambda a, b: (a == b) and a or None, x)])
-
     def _findcommonstart(self, strlist):
-        strlist = strlist[:]
-        prev = None
-        while True:
-            common = self._getcommonletters(strlist)
-            if common == prev:
-                break
-            strlist.append(common)
-            prev = common
-
-        return self._getcommonletters(strlist)
+        list_string = []
+        for _barcode in strlist:
+            list_string.append(_barcode.name)
+        return os.path.commonprefix(list_string)
